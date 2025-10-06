@@ -4,7 +4,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Changed from './'
+  base: '/', // Must be '/' for Vercel
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
