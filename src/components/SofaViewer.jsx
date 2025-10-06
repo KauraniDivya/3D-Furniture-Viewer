@@ -6,7 +6,7 @@ import { Upload, RotateCcw, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Sofa component with texture and material properties
-function Sofa({ textureUrl, color = '#ffffff', roughness = 0.7, metalness = 0.1 }) {
+function Sofa({ position = [0, 0, 0], scale = 1, textureUrl, color = '#3b82f6', roughness = 0.7, metalness = 0.1 }) {
   const meshRef = useRef();
   const texture = textureUrl ? useLoader(TextureLoader, textureUrl) : null;
   
@@ -22,7 +22,7 @@ function Sofa({ textureUrl, color = '#ffffff', roughness = 0.7, metalness = 0.1 
   }
 
   return (
-    <group ref={meshRef} position={[1, 0.43, -5.36]} scale={[2.5, 2.5, 2.5]}>
+    <group ref={meshRef} position={position} scale={[scale, scale, scale]}>
       {/* Sofa Base/Seat - softer edges and slight tilt */}
       <RoundedBox position={[0, 0.28, 0]} args={[2.9, 0.6, 1.15]} radius={0.12} smoothness={6} rotation={[-0.03, 0, 0]} castShadow receiveShadow>
         <meshPhysicalMaterial
@@ -168,14 +168,13 @@ function Room() {
 function Scene({ textureUrl, color, roughness = 0.7, metalness = 0.1 }) {
   return (
     <>
-      {/* Environment for soft reflections */}
       <Environment preset="apartment" />
-
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
+      
+      {/* Improved Lighting */}
+      <ambientLight intensity={0.7} />
       <directionalLight 
-        position={[8, 8, 5]} 
-        intensity={1.15}
+        position={[5, 10, 5]} 
+        intensity={1.5}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -185,35 +184,44 @@ function Scene({ textureUrl, color, roughness = 0.7, metalness = 0.1 }) {
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
-      <pointLight position={[-6, 6, 6]} intensity={0.6} color="#ffffff" />
-      <pointLight position={[5, 2, -5]} intensity={0.4} color="#fbbf24" />
+      <pointLight position={[-6, 8, 6]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[5, 3, -5]} intensity={0.5} color="#fbbf24" />
+
+      {/* Debug Helpers */}
+      <gridHelper args={[20, 20]} position={[0, 0, 0]} />
+      <axesHelper args={[5]} position={[0, 0, 0]} />
 
       {/* Room elements */}
       <Room />
 
-      {/* Hero sofa */}
+      {/* Hero sofa - centered and scaled appropriately */}
       <Sofa 
+        position={[0, 0.5, 0]}  // Slightly above floor
+        scale={1.5}             // Adjust scale as needed
         textureUrl={textureUrl} 
         color={color}
         roughness={roughness}
         metalness={metalness}
       />
 
-      {/* Soft contact shadows for grounding */}
+      {/* Improved contact shadows */}
       <ContactShadows 
-        position={[1, 0.01, 0]} 
-        opacity={0.15} 
-        scale={6.5} 
+        position={[0, 0.01, 0]} 
+        opacity={0.2} 
+        scale={10} 
         blur={2} 
-        far={7}
+        far={10}
         resolution={1024}
       />
+      
+      {/* Orbit Controls with better defaults */}
       <OrbitControls 
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        minDistance={3}
-        maxDistance={15}
+        minDistance={1}
+        maxDistance={20}
+        target={[0, 0.5, 0]}  // Look at center of sofa
       />
     </>
   );
