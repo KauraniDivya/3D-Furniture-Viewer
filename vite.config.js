@@ -14,6 +14,13 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
       },
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'three-vendor': ['three'],
+          'three-react': ['@react-three/fiber', '@react-three/drei'],
+        },
+      },
     },
   },
   server: {
