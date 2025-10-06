@@ -5,8 +5,8 @@ import { TextureLoader, RepeatWrapping } from 'three';
 import { Upload, RotateCcw, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// Sofa component with texture
-function Sofa({ textureUrl }) {
+// Sofa component with texture and material properties
+function Sofa({ textureUrl, color = '#ffffff', roughness = 0.7, metalness = 0.1 }) {
   const meshRef = useRef();
   const texture = textureUrl ? useLoader(TextureLoader, textureUrl) : null;
   
@@ -27,9 +27,11 @@ function Sofa({ textureUrl }) {
       <RoundedBox position={[0, 0.28, 0]} args={[2.9, 0.6, 1.15]} radius={0.12} smoothness={6} rotation={[-0.03, 0, 0]} castShadow receiveShadow>
         <meshPhysicalMaterial
           map={texture}
-          color={texture ? '#ffffff' : '#f7fafc'}
-          roughness={0.9}
-          metalness={0}
+          color={texture ? '#ffffff' : color}
+          roughness={roughness}
+          metalness={metalness}
+          clearcoat={0.2}
+          clearcoatRoughness={0.2}
         />
       </RoundedBox>
 
@@ -128,10 +130,14 @@ function Room() {
   const height = 4;
   return (
     <group>
-      {/* Floor */}
+      {/* Floor - using a larger plane with higher resolution to prevent z-fighting */}
       <mesh position={[1, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[24, 24]} />
-        <meshStandardMaterial color="#f3f4f6" roughness={0.95} />
+        <planeGeometry args={[25, 25, 1, 1]} />
+        <meshStandardMaterial 
+          color="#f3f4f6" 
+          roughness={0.95} 
+          metalness={0.1}
+        />
       </mesh>
 
       {/* Back wall */}
@@ -159,7 +165,7 @@ function Room() {
 }
 
 // Scene component
-function Scene({ textureUrl }) {
+function Scene({ textureUrl, color, roughness = 0.7, metalness = 0.1 }) {
   return (
     <>
       {/* Environment for soft reflections */}
@@ -186,10 +192,22 @@ function Scene({ textureUrl }) {
       <Room />
 
       {/* Hero sofa */}
-      <Sofa textureUrl={textureUrl} />
+      <Sofa 
+        textureUrl={textureUrl} 
+        color={color}
+        roughness={roughness}
+        metalness={metalness}
+      />
 
       {/* Soft contact shadows for grounding */}
-      <ContactShadows position={[1, 0, 0]} opacity={0.18} scale={7} blur={2.2} far={8} />
+      <ContactShadows 
+        position={[1, 0.01, 0]} 
+        opacity={0.15} 
+        scale={6.5} 
+        blur={2} 
+        far={7}
+        resolution={1024}
+      />
       <OrbitControls 
         enablePan={true}
         enableZoom={true}
@@ -205,6 +223,10 @@ export default function SofaViewer() {
   const [textureUrl, setTextureUrl] = useState(null);
   const [fileName, setFileName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState('texture');
+  const [color, setColor] = useState('#3b82f6');
+  const [roughness, setRoughness] = useState(0.7);
+  const [metalness, setMetalness] = useState(0.1);
   const fileInputRef = useRef();
 
   const handleFileUpload = (file) => {
@@ -212,6 +234,7 @@ export default function SofaViewer() {
       const url = URL.createObjectURL(file);
       setTextureUrl(url);
       setFileName(file.name);
+      setActiveTab('texture');
     }
   };
 
@@ -235,18 +258,21 @@ export default function SofaViewer() {
   const resetTexture = () => {
     setTextureUrl(null);
     setFileName('');
+    setColor('#3b82f6');
+    setRoughness(0.7);
+    setMetalness(0.1);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 flex flex-col h-screen">
       {/* Header */}
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="p-6 text-center border-b border-gray-200 bg-white/80 backdrop-blur-sm"
+        className="p-6 text-center border-b border-gray-200 bg-white/80 backdrop-blur-md"
       >
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           3D Sofa Texture Viewer
@@ -260,7 +286,7 @@ export default function SofaViewer() {
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="w-80 p-6 bg-slate-800 border-r border-slate-700 flex-shrink-0"
+          className="w-96 p-6 bg-white/95 backdrop-blur-sm border-r border-gray-200 flex-shrink-0 overflow-y-auto"
         >
           {/* Upload Section */}
           <div className="mb-8">
@@ -319,7 +345,7 @@ export default function SofaViewer() {
               Reset Texture
             </button>
             
-            <div className="p-4 bg-slate-700/50 rounded-lg">
+            {/* <div className="p-4 bg-slate-700/50 rounded-lg">
               <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Maximize2 size={16} />
                 Controls
@@ -329,7 +355,7 @@ export default function SofaViewer() {
                 <li>• Scroll to zoom</li>
                 <li>• Right-click to pan</li>
               </ul>
-            </div>
+            </div> */}
           </div>
         </motion.div>
 
